@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <title>Student Heights & Eye Color</title>
+  <style>
+    body {
+      margin: 0px;
+      font-family: sans-serif;
+      fill:  rgb(29, 28, 27);
+    }
+
+    .domain {
+      display: none;
+    }
+
+    .tick line {
+      stroke: rgb(204, 204, 203);
+    }
+
+    .tick text {
+      fill: #8E8883;
+      font-size: 10pt;
+      font-family: sans-serif;
+    }
+
+    .axis-label {
+      fill: #635F5D;
+      font-size: 22pt;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="svg">  
+    <g id="g" transform="translate(100, 60)">
+    </g>
+    <svg width="1200" height="700">
+    </svg>
+  </div>
+</body>
+  <script>
+
+    //define variables
+    const xValue = d => d.h;
+    const xLabel = 'Height (in CM)';
+    const yValue = d => d.name;
+    const yLabel = 'Student Name';
+    const margin = { left: 250, right: 30, top: 50, bottom: 75 };
+    const color = d => d.color;
+
+    const svg = d3.select('svg');
+    const width = svg.attr('width');
+    const height = svg.attr('height');
+    const innerWidth = width - margin.left - margin.right-100;
+    const innerHeight = height - margin.top - margin.bottom;
+
+    //append g and axis
+    const g = svg.append('g')
+      .attr('transform', `translate(${margin.left},${margin.top})`);
+    const xAxisG = g.append('g')
+      .attr('transform', `translate(0, ${innerHeight})`);
+    const yAxisG = g.append('g');
+
+    //x axis label
+    xAxisG.append('text')
+      .attr('class', 'axis-label')
+      .attr('x', innerWidth / 2)
+      .attr('y', 55)
+      .style("font-size", "20px")  
+      .text(xLabel);
+
+    //y axis label
+    yAxisG.append('text')
+      .attr('class', 'axis-label')
+      .attr('x', -170)
+      .attr('y', -185)
+      .attr('transform', 'rotate(-90)')
+      .style("font-size", "20px")  
+      .text(yLabel);
+      
+    //chart title
+      svg.append("text")
+        .attr("x", width/2 + 50)             
+        .attr("y", 40)
+        .attr("text-anchor", "middle")  
+        .style("font-size", "28px") 
+        .style("text-decoration", "underline")  
+        .text("Student Height - Sorted by Height");
+
+    //legend
+    svg.append("text")
+      .attr('x', 1095)
+      .attr('y', 190)
+      .style("font-size", "18px") 
+      .text("Eye Color:");
+
+    svg.append("rect")
+      .attr('x', 1100)
+      .attr('y', 200)
+      .attr('width', 20)
+      .attr('height', 20)
+      .style("fill", "Burlywood");
+    
+    svg.append("text")
+      .attr('x', 1125)
+      .attr('y', 215)
+      .text("Brown");
+
+    svg.append("rect")
+      .attr('x', 1100)
+      .attr('y', 230)
+      .attr('width', 20)
+      .attr('height', 20)
+      .style("fill", "limegreen");
+    
+    svg.append("text")
+      .attr('x', 1125)
+      .attr('y', 245)
+      .text("Green");
+
+    svg.append("rect")
+      .attr('x', 1100)
+      .attr('y', 260)
+      .attr('width', 20)
+      .attr('height', 20)
+      .style("fill", "#00bfff");
+    
+    svg.append("text")
+      .attr('x', 1125)
+      .attr('y', 275)
+      .text("Blue");
+
+    svg.append("rect")
+      .attr('x', 1100)
+      .attr('y', 290)
+      .attr('width', 20)
+      .attr('height', 20)
+      .style("fill", "#708090");
+    
+    svg.append("text")
+      .attr('x', 1125)
+      .attr('y', 305)
+      .text("Black");
+
+    //axis numbering
+    const xScale = d3.scaleLinear();
+    const yScale = d3.scaleBand()
+      .paddingInner(0.3)
+      .paddingOuter(0);
+
+    const xTicks = 10;
+    const xAxis = d3.axisBottom()
+      .scale(xScale)
+      .ticks(xTicks)
+      .tickPadding(5)
+      .tickSize(-innerHeight);
+
+    const yAxis = d3.axisLeft()
+      .scale(yScale)
+      .ticks(46);
+
+
+    //read data from file
+    const row = d => {
+
+      return {
+        name: d['Name'],
+        h: d['Height'],
+        color: d['Eye Color']
+      };
+    };
+
+    d3.csv('StudentNameHeightEye.csv', row, data => {
+      data = data.sort(function (a, b) {
+        return a.h - b.h;
+      }).reverse();
+
+
+      yScale
+        .domain(data.map(yValue).reverse())
+        .range([innerHeight, 0]);
+
+
+      xScale
+        .domain([0, d3.max(data, xValue)])
+        .range([0, innerWidth])
+        .nice(xTicks);
+
+
+      //update coloring to prettier colors 
+      g.selectAll('rect').data(data)
+        .enter().append('rect')
+        .attr('x', 0)
+        .attr('y', d => yScale(yValue(d)))
+        .attr('width', d => xScale(xValue(d)))
+        .attr('height', d => yScale.bandwidth())
+        .attr('fill', color)
+        .attr("fill", function (d) {
+          if (d.color == "Brown") {
+            return "Burlywood";
+          }
+          if (d.color == "Green") {
+            return "limegreen"
+          }
+          if (d.color == "Other") {
+            return "#708090"
+          }
+          if (d.color == "Blue") {
+            return "#00bfff"
+
+          }
+        });
+
+      //axis
+      xAxisG.call(xAxis);
+      yAxisG.call(yAxis);
+      //yAxisG.selectAll('.tick line').remove();
+
+    });
+
+  </script>
+</body>
+
+
+<body>
+  <div id="div2">
+    <svg id="svg2" width="1200" height="700">
+      <g>     </g>
+    </svg>
+  </div>
+  <script>
+
+//define variables
+  const xValue2 = d => d.h2;
+    const xLabel2 = 'Height (in CM)';
+    const yValue2 = d => d.name2;
+    const yLabel2 = 'Student Name';
+    const margin2 = { left: 250, right: 30, top: 50, bottom: 75 };
+    const color2 = d => d.color2;
+
+    //append to SVG2
+    const svg2 = d3.select('#svg2');
+    const width2 = svg2.attr('width');
+    const height2 = svg2.attr('height');
+    const innerWidth2 = width2 - margin2.left - margin2.right-100;
+    const innerHeight2 = height2 - margin2.top - margin2.bottom;
+
+    //append g2 to SVG2 and axes
+    const g2 = svg2.append('g')
+      .attr('transform', `translate(${margin2.left},${margin2.top})`);
+    const xAxisG2 = g2.append('g')
+      .attr('transform', `translate(0, ${innerHeight2})`);
+    const yAxisG2 = g2.append('g');
+
+    //chart 2 title
+    svg2.append("text")
+        .attr("x", width/2 + 50)             
+        .attr("y", 40)
+        .attr("text-anchor", "middle")  
+        .style("font-size", "28px") 
+        .style("text-decoration", "underline")  
+        .style("text-decoration", "bold")  
+        .text("Student Height - Sorted Alphabetically");
+
+    //chart 2 x axis
+    xAxisG2.append('text')
+      .attr('class', 'axis-label')
+      .attr('x', innerWidth2 / 2)
+      .attr('y', 55)
+      .style("font-size", "20px")  
+      .text(xLabel2);
+
+    //chart 2 y axis
+    yAxisG2.append('text')
+      .attr('class', 'axis-label')
+      .attr('x', -170)
+      .attr('y', -185)
+      .attr('transform', 'rotate(-90)')
+      .style("font-size", "20px")  
+      .text(yLabel2);
+
+    //legend
+    svg2.append("text")
+      .attr('x', 1095)
+      .attr('y', 190)
+      .style("font-size", "18px") 
+      .text("Eye Color:");
+
+    svg2.append("rect")
+      .attr('x', 1100)
+      .attr('y', 200)
+      .attr('width', 20)
+      .attr('height', 20)
+      .style("fill", "Burlywood");
+    
+    svg2.append("text")
+      .attr('x', 1125)
+      .attr('y', 215)
+      .text("Brown");
+
+    svg2.append("rect")
+      .attr('x', 1100)
+      .attr('y', 230)
+      .attr('width', 20)
+      .attr('height', 20)
+      .style("fill", "limegreen");
+    
+    svg2.append("text")
+      .attr('x', 1125)
+      .attr('y', 245)
+      .text("Green");
+
+    svg2.append("rect")
+      .attr('x', 1100)
+      .attr('y', 260)
+      .attr('width', 20)
+      .attr('height', 20)
+      .style("fill", "#00bfff");
+    
+    svg2.append("text")
+      .attr('x', 1125)
+      .attr('y', 275)
+      .text("Blue");
+
+    svg2.append("rect")
+      .attr('x', 1100)
+      .attr('y', 290)
+      .attr('width', 20)
+      .attr('height', 20)
+      .style("fill", "#708090");
+    
+    svg2.append("text")
+      .attr('x', 1125)
+      .attr('y', 305)
+      .text("Black");
+
+
+    //axes scale
+    const xScale2 = d3.scaleLinear();
+    const yScale2 = d3.scaleBand()
+      .paddingInner(0.3)
+      .paddingOuter(0);
+
+    //axes
+    const xTicks2 = 10;
+    const xAxis2 = d3.axisBottom()
+      .scale(xScale2)
+      .ticks(xTicks2)
+      .tickPadding(5)
+      .tickSize(-innerHeight2);
+
+    const yAxis2 = d3.axisLeft()
+      .scale(yScale2)
+      .ticks(46)
+
+      //read data into d object
+    const row2 = d => {
+
+      return {
+        name2: d['Name'],
+        h2: d['Height'],
+        color2: d['Eye Color']
+    
+      };
+
+    };
+
+    d3.csv('StudentNameHeightEye.csv', row2, data => {
+
+
+      //scale
+      yScale2
+        .domain(data.map(yValue2).reverse())
+        .range([innerHeight2, 0]);
+
+
+      xScale2
+        .domain([0, d3.max(data, xValue2)])
+        .range([0, innerWidth2])
+        .nice(xTicks2);
+
+
+      //change coloring to prettier colors
+      g2.selectAll('rect').data(data)
+        .enter().append('rect')
+        .attr('x', 0)
+        .attr('y', d => yScale2(yValue2(d)))
+        .attr('width', d => xScale2(xValue2(d)))
+        .attr('height', d => yScale2.bandwidth())
+        .attr('fill', color2)
+        .attr("fill", function (d) {
+          if (d.color2 == "Brown") {
+            return "Burlywood";
+          }
+          if (d.color2 == "Green") {
+            return "limegreen"
+          }
+          if (d.color2 == "Other") {
+            return "#708090"
+          }
+          if (d.color2 == "Blue") {
+            return "#00bfff"
+          }
+        });
+
+    
+      //axis
+      xAxisG2.call(xAxis2);
+      yAxisG2.call(yAxis2);
+      //yAxisG2.selectAll('.tick line').remove();
+    });
+  </script>
+  </div>
+</body>
+</html>
